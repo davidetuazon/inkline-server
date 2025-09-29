@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const validate = require('validate.js');
@@ -56,14 +56,13 @@ exports.login = async (req, res, next) => {
 }
 
 exports.updatePublicProfile = async (req, res, next) => {
-    const userId = req.user._id;
     const params = {...req.body};
 
     const issues = validate(params, constraints.profileUpdate);
     if (issues) return res.status(422).json({ error: issues });
 
     try {
-        const updatedUser = await UserService.updateProfile(userId, params);
+        const updatedUser = await UserService.updateProfile(req.user._id, params);
         if (!updatedUser) return res.status(404).json({ error: 'User not found' });
 
         res.status(201).json({ success: true, message: 'Full name updated successfully', user: updatedUser });
@@ -73,14 +72,13 @@ exports.updatePublicProfile = async (req, res, next) => {
 }
 
 exports.updateAccountSettings = async (req, res, next) => {
-    const userId = req.user._id;
     const params = {...req.body};
 
     const issues = validate(params, constraints.accountUpdate);
     if (issues) return res.status(422).json({ error: issues });
 
     try {
-        const updatedUser = await UserService.updateAccount(userId, params);
+        const updatedUser = await UserService.updateAccount(req.user._id, params);
         if (!updatedUser) return res.status(404).json({ error: 'User not found' });
 
         const payload = {
@@ -102,10 +100,8 @@ exports.updateAccountSettings = async (req, res, next) => {
 }
 
 exports.deleteUserAccount = async (req, res, next) => {
-    const userId = req.user._id;
-
     try {
-        const deletedUser = await UserService.deleteAccount(userId);
+        const deletedUser = await UserService.deleteAccount(req.user._id);
         if (!deletedUser) return res.status(404).json({ error: 'User not found' });
 
         res.status(201).json({ success: true, message: 'Account deleted successfully', user: deletedUser });
@@ -115,7 +111,6 @@ exports.deleteUserAccount = async (req, res, next) => {
 }
 
 exports.changeAccountPassword = async (req, res, next) => {
-    const userId = req.user._id;
     const params = {...req.body};
 
     const issues = validate(params, constraints.passwordChange);
@@ -124,7 +119,7 @@ exports.changeAccountPassword = async (req, res, next) => {
     if (params.oldPassword === params.newPassword) return res.status(422).json({ error: 'New password must be different from current password' });
 
     try {
-        const updatedUser = await UserService.changePassword(userId, params);
+        const updatedUser = await UserService.changePassword(req.user._id, params);
         if (!updatedUser) return res.status(404).json({ error: 'User not found '});
 
         res.status(201).json({ success: true, message: 'Password updated successfully', user: updatedUser });
@@ -134,14 +129,13 @@ exports.changeAccountPassword = async (req, res, next) => {
 }
 
 exports.changeAccountEmail = async (req, res, next) => {
-    const userId = req.user._id;
     const params = {...req.body};
 
     const issues = validate(params, constraints.emailChange);
     if (issues) return res.status(422).json({ error: issues });
 
     try {
-        const updatedUser = await UserService.changeEmail(userId, params);
+        const updatedUser = await UserService.changeEmail(req.user._id, params);
         if (!updatedUser) return res.status(404).json({ error: 'User not found' });
 
         const payload = {
