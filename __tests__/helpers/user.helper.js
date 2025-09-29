@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const createMockUser = (overrides = {}) => {
     const baseUser = {
         _id: '123',

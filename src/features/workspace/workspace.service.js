@@ -228,11 +228,12 @@ exports.handleInvite = async (userId, workspaceId, inviteeId, action) => {
         if (!invite) throw { status: 404, message: 'Invite not found or expired' };
 
         if (action === 'accepted') {
-            return await WorkspaceModel.findOneAndUpdate(
+            const workspace = await WorkspaceModel.findOneAndUpdate(
                 { deleted: false, _id: workspaceId, 'members.user': { $ne: inviteeId } },
                 { $push: { members: { user: inviteeId, role: 'member' } } },
                 { new: true }
             );
+        return { workspace, invite };
         }
 
         return invite;
@@ -301,4 +302,4 @@ exports.leaveWorkspace = async (userId, username, slug) => {
     } catch (e) {
         throw(e);
     }
-}
+};
