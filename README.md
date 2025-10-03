@@ -4,7 +4,7 @@
 
 ## About Me
 
-Hi! I’m **David Tuazon**, a final-year Computer Science student exploring MERN + TypeScript.
+Hi! I’m **David**, a final-year Computer Science student exploring MERN + TypeScript.
 I’m passionate about building real-world applications and eager to sharpen my full-stack skills by creating production-grade systems.
 
 ## Key Goals
