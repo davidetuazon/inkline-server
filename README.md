@@ -16,7 +16,7 @@ I’m passionate about building real-world applications and eager to sharpen my 
 
 ## Tech Stack
 - **Frontend:** React, TypeScript, Tailwind CSS  
-- **Backend:** Node.js, Express, TypeScript  
+- **Backend:** Node.js, Express 
 - **Database:** MongoDB  
 - **Others:** Jest for testing, Axios for API calls  
 
