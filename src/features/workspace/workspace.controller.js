@@ -9,13 +9,13 @@ exports.createWorkspace = async (req, res, next) => {
     params.slug = slugify(params.name);
 
     const issues = validate(params, constraints.create);
-    if (issues) return res.status(422).json({ error: e.message });
+    if (issues) return res.status(422).json({ error: issues });
 
     try {
-        const workspace = await WorkspaceService.create(req.user._id, params);
-        
+        const workspace = await WorkspaceService.createWorkspace(req.user._id, params);
         res.status(201).json({ success: true, message: 'Workspace created successfully', workspace });
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         if (e.code == 11000 && e.keyPattern?.name) {
             return res.status(409).json({ error: `Workspace name already exists on this account` });
         }
@@ -36,6 +36,7 @@ exports.listWorkspace = async (req, res, next) => {
 
         res.json(list);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 };
@@ -51,10 +52,9 @@ exports.getWorkspace = async (req, res, next) => {
 
     try {
         const workspace = await WorkspaceService.find(req.user._id, username, slug);
-        if (!workspace) return res.status(404).json({ error: 'Workspace not found' });
-
         res.json(workspace);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 };
@@ -70,8 +70,9 @@ exports.deleteWorkspace = async (req, res, next) => {
 
     try {
         await WorkspaceService.delete(req.user._id, username, slug);
-        res.send(201).json({ success: true, message: 'Workspace deleted' });
+        res.send(200).json({ success: true, message: 'Workspace deleted' });
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 }
@@ -93,10 +94,9 @@ exports.updateWorkspaceName = async (req, res, next) => {
 
     try {
         const workspace = await WorkspaceService.updateName(req.user._id, username, slug, updates);
-        if (!workspace) return res.status(404).json({ error: 'Workspace not found' });
-
         res.json(workspace);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 };
@@ -115,13 +115,11 @@ exports.sendWorkspaceInvite = async (req, res, next) => {
 
     try {
         const invitee = await UserService.getUser(req.user._id, inviteeUsername);
-        if (!invitee) return res.status(404).json({ error: 'User not found' });
 
         const invite = await WorkspaceService.createInvite(req.user._id, username, invitee._id, workspaceId);
-        if (!invite) return res.status(422).json({ error: 'Failed to create invite' });
-
         res.json(invite);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         if (e.code === 11000 && e.keyPattern?.inviteeId) {
             return res.status(409).json({ error: 'There is a pending invite for this user' });
         }
@@ -139,10 +137,9 @@ exports.cancelWorkspaceInvite = async (req, res, next) => {
 
     try {
         const invite = await WorkspaceService.cancelInvite(req.user._id, username, inviteId);
-        if (!invite) return res.status(422).json({ error: 'Something went wrong' });
-
         res.json(invite);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 };
@@ -160,6 +157,7 @@ exports.listWorkspaceInvite = async (req, res, next) => {
 
          res.json(list);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 }
@@ -176,10 +174,9 @@ exports.handleWorkspaceInvite = async (req, res, next) => {
 
     try {
         const response = await WorkspaceService.handleInvite(req.user._id, workspaceId, inviteeId, action);
-        if (!response) return res.status(422).json({ error: 'Something went wrong' });
-
         res.json(response);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 };
@@ -195,10 +192,9 @@ exports.removeWorkspaceMember = async (req, res, next) => {
 
     try {
         const workspace = await WorkspaceService.removeMember(req.user._id, username, slug, memberId);
-        if (!workspace) return res.status(422).json({ error: 'Something went wrong' });
-
         res.json(workspace);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 };
@@ -213,10 +209,9 @@ exports.leaveWorkspace = async (req, res, next) => {
 
     try {
         const workspace = await WorkspaceService.leaveWorkspace(req.user._id, username, slug);
-        if (!workspace) return res.status(422).json({ error: 'Something went wrong' });
-
         res.json(workspace);
     } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message });
         res.status(500).json({ error: e.message });
     }
 }

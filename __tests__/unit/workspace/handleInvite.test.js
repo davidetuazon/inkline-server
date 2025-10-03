@@ -99,7 +99,7 @@ describe('Workspace service - handleInvite', () => {
         const ownerId = new mongoose.Types.ObjectId();
         const action = 'declined';
 
-         const mockInvite = createMockInvite(
+        const mockInvite = createMockInvite(
             {
                 deleted: false,
                 _id: new mongoose.Types.ObjectId(),
@@ -121,5 +121,31 @@ describe('Workspace service - handleInvite', () => {
             { status: action },
             { new: true }
         );
+    });
+
+    it('should throw when database error occurs', async () => {
+        const mockUser = createMockUser({ _id: new mongoose.Types.ObjectId() });
+        const workspaceId = new mongoose.Types.ObjectId();
+        const ownerId = new mongoose.Types.ObjectId();
+        const action = 'accepted';
+
+        const mockInvite = createMockInvite(
+            {
+                deleted: false,
+                _id: new mongoose.Types.ObjectId(),
+                ownerId: ownerId,
+                workspaceId,
+                inviteeId: mockUser._id,
+                status: action,
+            }
+        );
+        jest.spyOn(WorkspaceInviteModel, 'findOneAndUpdate').mockResolvedValue(mockInvite);
+
+        const dbError = new Error('DB connection failed');
+        jest.spyOn(WorkspaceModel, 'findOneAndUpdate').mockRejectedValue(dbError);
+
+        await expect(
+            WorkspaceService.handleInvite(mockUser._id, workspaceId, mockUser._id, action)
+        ).rejects.toThrow('DB connection failed');
     });
 });

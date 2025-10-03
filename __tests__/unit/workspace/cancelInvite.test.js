@@ -61,7 +61,7 @@ describe('Workspace service - cancelInvite', () => {
 
     it('should throw 404 when invite not found', async () => {
         const mockUser = createMockUser({ _id: new mongoose.Types.ObjectId() });
-        workspaceOwnerValidator.mockResolvedValue(mockUser)
+        workspaceOwnerValidator.mockResolvedValue(mockUser);
         const mockInvitee = createMockUser({ _id: new mongoose.Types.ObjectId() });
 
         jest.spyOn(WorkspaceInviteModel, 'findOneAndUpdate').mockResolvedValue(null);
@@ -69,5 +69,18 @@ describe('Workspace service - cancelInvite', () => {
         await expect(
             WorkspaceService.cancelInvite(mockUser._id, 'tester', mockInvitee._id)
         ).rejects.toMatchObject({ status: 404, message: 'Invite not found' });
+    });
+    
+    it('should throw when database error occurs', async () => {
+        const mockUser = createMockUser({ _id: new mongoose.Types.ObjectId() });
+        workspaceOwnerValidator.mockResolvedValue(mockUser);
+        const mockInvitee = createMockUser({ _id: new mongoose.Types.ObjectId() });
+
+        const dbError = new Error('DB connection failed');
+        jest.spyOn(WorkspaceInviteModel, 'findOneAndUpdate').mockRejectedValue(dbError);
+
+        await expect(
+            WorkspaceService.cancelInvite(mockUser._id, 'tester', mockInvitee._id)
+        ).rejects.toThrow('DB connection failed');
     });
 });

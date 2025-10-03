@@ -44,5 +44,5 @@ describe('User service - updateProfile', () => {
         await expect(
             UserService.updateProfile('123', { fullName: 'John Doe' })
         ).rejects.toThrow('DB connection failed');
-    })
+    });
 });

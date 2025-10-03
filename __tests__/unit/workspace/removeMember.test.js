@@ -178,4 +178,32 @@ describe('Workspace service - removeMember', () => {
             { deleted: false, slug: 'team-a', owner: mockUser._id }
         );
     });
+
+    it('should throw when database error occurs', async () => {
+        const mockUser = createMockUser({ _id: new mongoose.Types.ObjectId() });
+        workspaceOwnerValidator.mockResolvedValue(mockUser);
+
+        const mockMember = createMockUser({ _id: new mongoose.Types.ObjectId() });
+        const workspaceId = new mongoose.Types.ObjectId();
+        const mockWorkspace = createMockWorkspace(
+            {
+                _id: workspaceId,
+                name: 'Team A',
+                slug: 'team-a',
+                owner: mockUser._id,
+                members: [
+                    { user: mockUser._id, role: 'admin'},
+                    { user: mockMember._id, role: 'member'}
+                ]
+            }
+        );
+
+        mockWorkspace.save = jest.fn().mockResolvedValue(mockWorkspace);
+        const dbError = new Error('DB connection failed');
+        jest.spyOn(WorkspaceModel, 'findOne').mockRejectedValue(dbError);
+
+        await expect(
+            WorkspaceService.removeMember(mockUser._id, 'tester', 'team-a', mockMember._id)
+        ).rejects.toThrow('DB connection failed');
+    });
 });

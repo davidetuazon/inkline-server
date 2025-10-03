@@ -103,4 +103,16 @@ describe('Workspace service - updateName', () => {
             { new: true }
         );
     });
+
+    it('should throw when database error occurs', async () => {
+        const mockUser = createMockUser({ _id: new mongoose.Types.ObjectId() });
+        workspaceOwnerValidator.mockResolvedValue(mockUser);
+
+        const dbError = new Error('DB connection failed');
+        jest.spyOn(WorkspaceModel, 'findOneAndUpdate').mockRejectedValue(dbError);
+
+        await expect(
+            WorkspaceService.updateName(mockUser._id, 'tester', 'my-team', { name: 'team a', slug: 'team-a' })
+        ).rejects.toThrow('DB connection failed');
+    });
 });

@@ -28,4 +28,14 @@ describe('Workspace service - listInvite', () => {
             expect.any(Object)
         );
     });
+
+    it('should throw when database error occurs', async () => {
+        const dbError = new Error('DB connection failed'); 
+        WorkspaceInviteModel.paginate = jest.fn().mockRejectedValue(dbError);
+
+        const userId = new mongoose.Types.ObjectId();
+        await expect(
+            WorkspaceService.listInvite(userId)
+        ).rejects.toThrow('DB connection failed');
+    });
 });

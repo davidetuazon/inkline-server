@@ -63,4 +63,16 @@ describe('Workspace service - delete', () => {
             { new: true }
         );
     });
+
+    it('should throw when database error occurs', async () => {
+        const mockUser = createMockUser({});
+        workspaceOwnerValidator.mockResolvedValue(mockUser);
+
+        const dbError = new Error('DB connection failed');
+        jest.spyOn(WorkspaceModel, 'findOneAndUpdate').mockRejectedValue(dbError);
+
+        await expect(
+            WorkspaceService.delete(mockUser._id, 'tester', 'my-org')
+        ).rejects.toThrow('DB connection failed');
+    });
 });

@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon app.js",
-    "start": "node app.js",
+    "dev": "nodemon server.js",
+    "start": "node server.js",
     "test": "jest --runInBand --detectOpenHandles",
-    "test:unit": "jest __tests__/unit",
-    "test:integration": "jest __tests__/integration",
+    "test:unit": "jest __tests__/unit --runInBand --detectOpenHandles",
+    "test:integration": "jest __tests__/integration --runInBand --detectOpenHandles",
     "test:e2e": "jest __tests__/e2e --runInBand --detectOpenHandles"
   },
   "keywords": [],

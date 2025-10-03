@@ -28,9 +28,4 @@ const workspaceRoute = require(path.resolve('.') + '/src/features/workspace/work
 app.use(basepath + '/v1', userRoute);
 app.use(basepath + '/v1', workspaceRoute);
 
-// const PORT = process.env.port || 8000;
-// app.listen(PORT, () => {
-//     console.log(`Server is listening on port ${PORT}`);
-// });
-
 module.exports = app;

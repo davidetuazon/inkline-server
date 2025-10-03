@@ -12,7 +12,7 @@ describe('Workspace service - create', () => {
         const userId = new mongoose.Types.ObjectId();
 
         await expect(
-            WorkspaceService.create(userId, null)
+            WorkspaceService.createWorkspace(userId, null)
         ).rejects.toMatchObject({ status: 400, message: 'Missing request body'});
     });
 
@@ -21,7 +21,7 @@ describe('Workspace service - create', () => {
 
         jest.spyOn(WorkspaceModel, 'create').mockResolvedValue(mockWorkspace);
 
-        const result = await WorkspaceService.create('123', { name: 'My Org', slug: 'my-org' });
+        const result = await WorkspaceService.createWorkspace('123', { name: 'My Org', slug: 'my-org' });
 
         expect(result.name).toEqual('My Org');
         expect(result.slug).toEqual('my-org');
@@ -33,7 +33,7 @@ describe('Workspace service - create', () => {
 
         jest.spyOn(WorkspaceModel, 'create').mockResolvedValue(mockWorkspace);
 
-        const result = await WorkspaceService.create('123', { name: 'My Org', slug: 'my-org' });
+        const result = await WorkspaceService.createWorkspace('123', { name: 'My Org', slug: 'my-org' });
 
         const ownerMember = result.members.find(m => m.role === 'admin');
         expect(ownerMember.user).toEqual('123');
@@ -42,5 +42,16 @@ describe('Workspace service - create', () => {
             expect(m).toHaveProperty('user');
             expect(m).toHaveProperty('role');
         });
+    });
+
+    it('should throw when database error occurs', async () => {
+        const userId = new mongoose.Types.ObjectId();
+        const dbError = new Error('DB connection failed');
+
+        jest.spyOn(WorkspaceModel, 'create').mockRejectedValue(dbError);
+
+        await expect(
+            WorkspaceService.createWorkspace(userId, {name: 'test' })
+        ).rejects.toThrow('DB connection failed');
     });
 });

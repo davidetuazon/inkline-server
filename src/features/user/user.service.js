@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const { toSafeUser } = require('./user.utils');
 const { allowedUpdates } = require('../../shared/helpers/service.utils');
 
-exports.create = async (params) => {
+exports.createUser = async (params) => {
     if (!params) throw { status: 400, message: 'Missing request body' };
 
     try {
@@ -24,7 +24,7 @@ exports.signIn = async (params) => {
         if (!user) throw { status: 404, message: 'User not found' };
 
         const matched = await bcrypt.compare(params.password, user.password);
-        if (!matched) throw { status: 422, message: 'Incorrect email / password' };
+        if (!matched) throw { status: 401, message: 'Incorrect email / password' };
 
         return {
             role: user.role,

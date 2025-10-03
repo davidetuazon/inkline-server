@@ -32,6 +32,7 @@ const signIn = {
 const profileUpdate = {
     fullName: {
         presence: { allowEmpty: false, message: 'cannot be blank' },
+        length: { minimum: 1, message: 'cannot be empty' },
     }
 }
 

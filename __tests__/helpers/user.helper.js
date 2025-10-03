@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const createMockUser = (overrides = {}) => {
     const baseUser = {
         _id: '123',
@@ -13,7 +15,7 @@ const createMockUser = (overrides = {}) => {
     return {
         ...user,
         toObject: function() {
-            const { password, ...safe } = this;
+            const { password, refreshToken, ...safe } = this;
             return { ...safe };
         }
     };

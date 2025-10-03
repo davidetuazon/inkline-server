@@ -137,4 +137,18 @@ describe('Workspace service - createInvite', () => {
         expect(WorkspaceInviteModel.findOne).toHaveBeenCalledWith({ workspaceId: mockWorkspace._id, inviteeId: mockInviteeId, status: 'pending' });
         expect(WorkspaceInviteModel.create).toHaveBeenCalledWith({ ownerId: mockUser._id, workspaceId: mockWorkspace._id, inviteeId: mockInviteeId });
     });
+
+    it('should throw when database error occurs', async () => {
+        const mockUser = createMockUser({ _id: new mongoose.Types.ObjectId() });
+        workspaceOwnerValidator.mockResolvedValue(mockUser);
+       
+        const dbError = new Error('DB connection failed');
+        jest.spyOn(WorkspaceModel, 'findOne').mockRejectedValue(dbError);
+
+        const workspaceId = new mongoose.Types.ObjectId();
+        const mockInviteeId = new mongoose.Types.ObjectId();
+        await expect(
+            WorkspaceService.createInvite(mockUser._id, 'tester', mockInviteeId, workspaceId)
+        ).rejects.toThrow('DB connection failed');
+    });
 });

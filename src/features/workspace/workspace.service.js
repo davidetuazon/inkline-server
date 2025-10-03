@@ -4,7 +4,7 @@ const WorkspaceInviteModel = require('./workspace.invite.model');
 const { workspaceOwnerValidator } = require('./workspace.utils');
 const { allowedUpdates } = require('../../shared/helpers/service.utils');
 
-exports.create = async (userId, params) => {
+exports.createWorkspace = async (userId, params) => {
     if (!params) throw {status: 400, message: 'Missing request body' };
 
     try {
@@ -80,13 +80,15 @@ exports.find = async (userId, username, slug) => {
             };
         };
 
-        return await WorkspaceModel
+        const workspace = await WorkspaceModel
             .findOne(filter)
             .populate([
                 { path: 'owner', select: 'email username' },
                 { path: 'members.user', select: 'email username fullName' }
             ])
             .lean();
+        if (!workspace) throw { status: 404, message: 'Workspace not found' };
+        return workspace;
     } catch (e) {
         throw(e);
     }

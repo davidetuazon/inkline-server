@@ -80,4 +80,13 @@ describe('Workspace service - findAll', () => {
 
         expect(result).toEqual(mockResult);
     });
+
+    it('should throw when database error occurs', async () => {
+        const dbError = new Error('DB connection failed');
+        WorkspaceModel.paginate = jest.fn().mockRejectedValue(dbError);
+
+        await expect(
+            WorkspaceService.findAll('123')
+        ).rejects.toThrow('DB connection failed');
+    });
 });
