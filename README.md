@@ -1,3 +1,7 @@
+# Updates
+Hi! I halted this project's development for the mean time as I bring my full energy to enhancing and developing my algorithmic and problem solving skills. I'm currently on the path to master DSA. Wish me luck!
+I'll get back to developing this project soon.
+
 # Inkline
 
 **Inkline** is a SaaS-inspired platform for managing workspaces, tasks, and collaborations—built as a production-grade playground to learn and experiment with full-stack development.  
