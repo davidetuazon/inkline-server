@@ -2,6 +2,7 @@ const UserModel = require('./user.model');
 const bcrypt = require('bcryptjs');
 const { toSafeUser } = require('./user.utils');
 const { allowedUpdates } = require('../../shared/helpers/service.utils');
+const redis = require('../../config/redis');
 
 exports.createUser = async (params) => {
     if (!params) throw { status: 400, message: 'Missing request body' };
@@ -63,7 +64,14 @@ exports.updateAccount = async (userId, updates) => {
         const user = await UserModel.findByIdAndUpdate(userId, safeUpdates, { new: true });
         if (!user) throw { status: 404, message: 'User not found' };
         
-        return toSafeUser(user);
+        const safeUser = toSafeUser(user);
+
+        if (updates.username) {
+            await redis.del(`user:${updates.username}`);
+        }
+        await redis.del(`user:${username}`);
+
+        return safeUser;
     } catch (e) {
         throw (e);
     }
@@ -118,14 +126,27 @@ exports.changeEmail = async (userId, updates) => {
 exports.getUser = async (userId, username) => {
     if (!username) throw { status: 400, message: 'Missing parameter/s' };
 
+    const cacheKey = `user:${username}`;
+
     try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+            console.log('Cache hit: ', username);
+            return JSON.parse(cached);
+        }
+
         const me = await UserModel.findOne({ deleted: false, _id: userId });
         if (!me) throw { status: 401, message: 'Unauthorized' };
 
         const user = await UserModel.findOne({ deleted: false, username: username});
         if (!user) throw { status: 404, message: 'User not found' };
 
-        return toSafeUser(user);
+        const safeUser = toSafeUser(user);
+
+        await redis.setEx(cacheKey, 3600, JSON.stringify(safeUser));
+        console.log('Cache miss, saved to Redis: ', username);
+
+        return safeUser;
     } catch (e) {
         throw(e);
     }

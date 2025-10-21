@@ -31,7 +31,13 @@ const userSchema = new Schema(
             type: String,
             required: true,
         },
-        refreshToken: [String],
+        refreshToken: [
+            {
+                token: String,
+                issuedAt: Date,
+                expiresAt: Date,
+            }
+        ],
     }, { timestamps: { createdAt: 'createdDate', updatedAt: 'updatedDate' } }
 );
 userSchema.index({

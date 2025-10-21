@@ -3,6 +3,7 @@ const WorkspaceModel = require('./workspace.model');
 const WorkspaceInviteModel = require('./workspace.invite.model');
 const { workspaceOwnerValidator } = require('./workspace.utils');
 const { allowedUpdates } = require('../../shared/helpers/service.utils');
+const { setCache, getCache, delCache, invalidateUserCache } = require('../../shared/cache.utils');
 
 exports.createWorkspace = async (userId, params) => {
     if (!params) throw {status: 400, message: 'Missing request body' };
@@ -55,10 +56,11 @@ exports.findAll = async (userId, query = "", options = {}) => {
 exports.find = async (userId, username, slug) => {
     if (!username || !slug) throw { status: 400, message: 'Missing parameter/s' };
 
-    try {
-        const me = await UserModel.findOne({ deleted: false, _id: userId });
-        if (!me) throw { status: 404, message: 'User not found' };
+    const cacheKey = `workspace:${username}:${slug}:${userId}`;
+    const cached = await getCache(cacheKey);
+    if (cached) return cached;
 
+    try {
         const owner = await UserModel.findOne({ deleted: false, username: username });
         if (!owner) throw { status: 404, message: 'User not found' };
 
@@ -67,16 +69,16 @@ exports.find = async (userId, username, slug) => {
             slug: slug
         };
 
-        if (me._id.toString() === owner._id.toString()) {
+        if (userId.toString() === owner._id.toString()) {
             filter.$or = [
-                { owner: me._id },
-                { 'members.user': me._id },
+                { owner: userId },
+                { 'members.user': userId },
             ];
         } else {
             filter = {
                 ...filter,
                 owner: owner._id,
-                'members.user': me._id,
+                'members.user': userId,
             };
         };
 
@@ -88,6 +90,8 @@ exports.find = async (userId, username, slug) => {
             ])
             .lean();
         if (!workspace) throw { status: 404, message: 'Workspace not found' };
+
+        await setCache(cacheKey, workspace, 600);
         return workspace;
     } catch (e) {
         throw(e);
@@ -96,6 +100,8 @@ exports.find = async (userId, username, slug) => {
 
 exports.delete = async (userId, username, slug) => {
     if (!username || !slug) throw { status: 400, message: 'Missing parameter/s' };
+
+    const cacheKey = `workspace:${username}:${slug}:${userId}`;
 
     try {
         const owner = await workspaceOwnerValidator(userId, username);
@@ -107,6 +113,9 @@ exports.delete = async (userId, username, slug) => {
 
         const deletedWorkspace = await WorkspaceModel.findOneAndUpdate(filter, { deleted: true }, { new: true });
         if (!deletedWorkspace) throw { status: 404, message: 'Workspace not found' };
+
+        await delCache(cacheKey);
+        await invalidateUserCache(username);
         return deletedWorkspace;
     } catch (e) {
         throw(e);
@@ -119,6 +128,11 @@ exports.updateName = async (userId, username, slug, updates = {}) => {
     const safeUpdates = allowedUpdates(['name', 'slug'], updates);
     if(Object.keys(safeUpdates).length === 0) throw { status: 400, message: "Updates can't be null" };
 
+    const oldCacheKey = `workspace:${username}:${slug}:${userId}`;
+    const newSlug = safeUpdates.slug || slug;
+    const newCacheKey = `workspace:${username}:${newSlug}:${userId}`;
+
+
     try {
         const owner = await workspaceOwnerValidator(userId, username);
 
@@ -130,6 +144,10 @@ exports.updateName = async (userId, username, slug, updates = {}) => {
         const updatedWorkspace = await WorkspaceModel.findOneAndUpdate(filter, safeUpdates, { new: true });
         if (!updatedWorkspace) throw { status: 404, message: 'Workspace not found' };
 
+        if (safeUpdates.slug && safeUpdates.slug !== slug) {
+            await delCache(oldCacheKey);
+        }
+        await setCache(newCacheKey, updatedWorkspace);
         return updatedWorkspace;
     } catch (e) {
         throw(e);

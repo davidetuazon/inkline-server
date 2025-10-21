@@ -4,12 +4,21 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const rateLimiter = rateLimit({
+    windowMs: 3 * 60 * 1000,    // 3 mins
+    max: 100,
+    message: 'Too many requests, please slow down!'
+});
+
+app.use(rateLimiter);
 
 const mongoURI = process.env.NODE_ENV === 'production' ? process.env.MONGO_URI : process.env.MONGO_URI_LOCAL;
 
