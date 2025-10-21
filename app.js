@@ -26,6 +26,10 @@ if (process.env.NODE_ENV !== 'test') {
     mongoose.connect(mongoURI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
+        maxPoolSize: 20,
+        minPoolSize: 5,
+        maxIdleTimeMS: 30_000,  // close idle connections after 30s
+        waitQueueTimeoutMS: 5000,   // throw error if waiting time > 5s
     });
 }
 

@@ -3,7 +3,7 @@ const WorkspaceModel = require('./workspace.model');
 const WorkspaceInviteModel = require('./workspace.invite.model');
 const { workspaceOwnerValidator } = require('./workspace.utils');
 const { allowedUpdates } = require('../../shared/helpers/service.utils');
-const { setCache, getCache, delCache, invalidateUserCache } = require('../../shared/cache.utils');
+const { setCache, getCache, clearCache, clearAllCache } = require('../../cache/redis-cache');
 
 exports.createWorkspace = async (userId, params) => {
     if (!params) throw {status: 400, message: 'Missing request body' };
@@ -26,6 +26,10 @@ exports.createWorkspace = async (userId, params) => {
 };
 
 exports.findAll = async (userId, query = "", options = {}) => {
+    const cacheKey = `workspaceOwner:${userId}`;
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+
     try {
         let filter = {
             deleted: false,
@@ -47,7 +51,10 @@ exports.findAll = async (userId, query = "", options = {}) => {
             populate: { path: 'owner', select: 'email username' }
         };
 
-        return await WorkspaceModel.paginate(filter, paginateOptions);
+        const workspaces = await WorkspaceModel.paginate(filter, paginateOptions);
+
+        setCache(cacheKey, workspaces);
+        return workspaces;
     } catch (e) {
         throw(e);
     }
@@ -57,7 +64,7 @@ exports.find = async (userId, username, slug) => {
     if (!username || !slug) throw { status: 400, message: 'Missing parameter/s' };
 
     const cacheKey = `workspace:${username}:${slug}:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cached = getCache(cacheKey);
     if (cached) return cached;
 
     try {
@@ -91,7 +98,7 @@ exports.find = async (userId, username, slug) => {
             .lean();
         if (!workspace) throw { status: 404, message: 'Workspace not found' };
 
-        await setCache(cacheKey, workspace, 600);
+        setCache(cacheKey, workspace);
         return workspace;
     } catch (e) {
         throw(e);
@@ -114,8 +121,7 @@ exports.delete = async (userId, username, slug) => {
         const deletedWorkspace = await WorkspaceModel.findOneAndUpdate(filter, { deleted: true }, { new: true });
         if (!deletedWorkspace) throw { status: 404, message: 'Workspace not found' };
 
-        await delCache(cacheKey);
-        await invalidateUserCache(username);
+        clearCache(cacheKey);
         return deletedWorkspace;
     } catch (e) {
         throw(e);
@@ -145,9 +151,10 @@ exports.updateName = async (userId, username, slug, updates = {}) => {
         if (!updatedWorkspace) throw { status: 404, message: 'Workspace not found' };
 
         if (safeUpdates.slug && safeUpdates.slug !== slug) {
-            await delCache(oldCacheKey);
+            clearCache(oldCacheKey);
         }
-        await setCache(newCacheKey, updatedWorkspace);
+
+        setCache(newCacheKey, updatedWorkspace);
         return updatedWorkspace;
     } catch (e) {
         throw(e);
